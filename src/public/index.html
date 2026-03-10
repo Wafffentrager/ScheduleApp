@@ -1,0 +1,85 @@
+﻿<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ScheduleApp</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="bg-blobs" aria-hidden="true"></div>
+    <header class="hero">
+      <div>
+        <p class="kicker">ScheduleApp</p>
+        <h1>Расписание пар</h1>
+        <p class="subtitle">Минимальный, но аккуратный журнал расписания для вуза: просмотр, добавление и редактирование занятий.</p>
+      </div>
+      <div class="hero-card">
+        <p class="hero-label">Сегодня</p>
+        <p id="today" class="hero-date">--.--.----</p>
+        <p class="hero-hint">Управляйте парами без лишней сложности.</p>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Список пар</h2>
+          <button id="refreshBtn" class="ghost">Обновить</button>
+        </div>
+        <div id="emptyState" class="empty">Пока нет ни одной пары. Добавьте первую запись справа.</div>
+        <div id="lessons" class="cards"></div>
+      </section>
+
+      <section class="panel form-panel">
+        <div class="panel-header">
+          <h2 id="formTitle">Добавить пару</h2>
+          <button id="resetBtn" class="ghost">Сбросить</button>
+        </div>
+        <form id="lessonForm" class="form">
+          <label>
+            Дата
+            <input type="date" name="date" required />
+          </label>
+          <div class="row">
+            <label>
+              Начало
+              <input type="time" name="start" required />
+            </label>
+            <label>
+              Конец
+              <input type="time" name="end" required />
+            </label>
+          </div>
+          <label>
+            Предмет
+            <input type="text" name="subject" placeholder="Например, Теория алгоритмов" required />
+          </label>
+          <label>
+            Преподаватель
+            <input type="text" name="teacher" placeholder="Фамилия И.О." />
+          </label>
+          <div class="row">
+            <label>
+              Аудитория
+              <input type="text" name="room" placeholder="Ауд. 305" />
+            </label>
+            <label>
+              Группа
+              <input type="text" name="group" placeholder="ПИ-21" />
+            </label>
+          </div>
+          <button class="primary" type="submit">Сохранить</button>
+          <input type="hidden" name="id" />
+          <p id="formError" class="error" role="alert"></p>
+        </form>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>ScheduleApp • МТУСИ • 2026</p>
+    </footer>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
