@@ -88,6 +88,20 @@ body {
   color: var(--muted);
 }
 
+.role-picker {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.role-picker select {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(28, 27, 31, 0.2);
+  font-family: inherit;
+}
+
 .layout {
   display: grid;
   gap: 28px;
@@ -153,12 +167,29 @@ body {
   font-size: 14px;
 }
 
+.card-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .tag {
   background: var(--accent-soft);
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 12px;
   color: var(--accent);
+}
+
+.tag.cancelled {
+  background: #fde7e7;
+  color: #b42318;
+}
+
+.cancel-note {
+  margin: 0;
+  font-size: 13px;
+  color: #7a1f1f;
 }
 
 .empty {
@@ -218,6 +249,14 @@ button.ghost {
   background: transparent;
   color: var(--accent);
   border: 1px solid rgba(31, 122, 140, 0.4);
+}
+
+body[data-role='student'] .form-panel {
+  display: none;
+}
+
+body[data-role='student'] .card-actions {
+  display: none;
 }
 
 .error {

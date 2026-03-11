@@ -5,10 +5,29 @@ const lessonsEl = document.getElementById('lessons');
 const emptyState = document.getElementById('emptyState');
 const resetBtn = document.getElementById('resetBtn');
 const refreshBtn = document.getElementById('refreshBtn');
+const roleSelect = document.getElementById('roleSelect');
 
 const todayEl = document.getElementById('today');
 const today = new Date();
 todayEl.textContent = today.toLocaleDateString('ru-RU');
+
+let currentRole = 'student';
+
+function setRole(role) {
+  currentRole = role;
+  document.body.dataset.role = role;
+  localStorage.setItem('scheduleRole', role);
+}
+
+if (roleSelect) {
+  const savedRole = localStorage.getItem('scheduleRole') || 'student';
+  roleSelect.value = savedRole;
+  setRole(savedRole);
+  roleSelect.addEventListener('change', event => {
+    setRole(event.target.value);
+    loadLessons();
+  });
+}
 
 function setFormMode(editing) {
   formTitle.textContent = editing ? 'Редактировать пару' : 'Добавить пару';
@@ -56,9 +75,18 @@ function renderLessons(lessons) {
     const meta = document.createElement('div');
     meta.className = 'card-meta';
 
+    const cancelled = Boolean(lesson.cancelled);
+    if (cancelled) {
+      const cancelledTag = makeTag('Отменена');
+      cancelledTag.classList.add('cancelled');
+      meta.appendChild(cancelledTag);
+    }
     if (lesson.teacher) meta.appendChild(makeTag(lesson.teacher));
     if (lesson.room) meta.appendChild(makeTag(lesson.room));
     if (lesson.group) meta.appendChild(makeTag(lesson.group));
+
+    const actions = document.createElement('div');
+    actions.className = 'card-actions';
 
     const editBtn = document.createElement('button');
     editBtn.className = 'ghost';
@@ -77,9 +105,27 @@ function renderLessons(lessons) {
       form.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'ghost';
+    cancelBtn.textContent = 'Отменить';
+    cancelBtn.disabled = cancelled;
+    cancelBtn.addEventListener('click', async () => {
+      const comment = window.prompt('Причина отмены пары');
+      if (!comment || !comment.trim()) return;
+      await cancelLesson(lesson.id, comment.trim());
+    });
+
     card.appendChild(header);
     card.appendChild(meta);
-    card.appendChild(editBtn);
+    if (cancelled && lesson.cancelComment) {
+      const note = document.createElement('p');
+      note.className = 'cancel-note';
+      note.textContent = `Комментарий: ${lesson.cancelComment}`;
+      card.appendChild(note);
+    }
+    actions.appendChild(editBtn);
+    actions.appendChild(cancelBtn);
+    card.appendChild(actions);
 
     lessonsEl.appendChild(card);
   });
@@ -94,13 +140,34 @@ function makeTag(text) {
 
 async function loadLessons() {
   try {
-    const res = await fetch('/api/lessons');
+    const res = await fetch('/api/lessons', {
+      headers: { 'x-role': currentRole }
+    });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       errorEl.textContent = data.error || 'Не удалось загрузить расписание';
       return;
     }
     renderLessons(data.lessons || []);
+  } catch (err) {
+    errorEl.textContent = 'Нет соединения с сервером';
+  }
+}
+
+async function cancelLesson(id, cancelComment) {
+  errorEl.textContent = '';
+  try {
+    const res = await fetch(`/api/lessons/${id}/cancel`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'x-role': currentRole },
+      body: JSON.stringify({ cancelComment })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      errorEl.textContent = data.error || 'Ошибка отмены';
+      return;
+    }
+    await loadLessons();
   } catch (err) {
     errorEl.textContent = 'Нет соединения с сервером';
   }
@@ -127,7 +194,7 @@ form.addEventListener('submit', async event => {
   try {
     const res = await fetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-role': currentRole },
       body: JSON.stringify(payload)
     });
 

@@ -9,6 +9,30 @@
       "teacher": "Залупкина О.А.",
       "room": "Н-305",
       "group": "БСТ2503"
+    },
+    {
+      "id": "1773218982767",
+      "date": "2026-03-11",
+      "start": "11:00",
+      "end": "12:30",
+      "subject": "Теория алгоритмов",
+      "teacher": "Иванов",
+      "room": "543",
+      "group": "ПИ-21",
+      "cancelled": true,
+      "cancelComment": "Заболел"
+    },
+    {
+      "id": "1773219180289",
+      "date": "2026-03-11",
+      "start": "09:00",
+      "end": "10:30",
+      "subject": "1С",
+      "teacher": "Зубенко",
+      "room": "241",
+      "group": "ПИ-21",
+      "cancelled": false,
+      "cancelComment": ""
     }
   ]
 }

@@ -44,6 +44,22 @@ function sendText(res, status, text) {
   res.end(text);
 }
 
+function getRole(req) {
+  return String(req.headers['x-role'] || 'student').toLowerCase();
+}
+
+function canWrite(role) {
+  return role === 'teacher' || role === 'admin';
+}
+
+function ensureWriteAccess(res, role) {
+  if (!canWrite(role)) {
+    sendJson(res, 403, { error: 'Forbidden' });
+    return false;
+  }
+  return true;
+}
+
 function parseBody(req) {
   return new Promise((resolve, reject) => {
     let body = '';
@@ -127,6 +143,7 @@ function serveStatic(req, res) {
 async function handleApi(req, res) {
   const urlObj = new URL(req.url, `http://${req.headers.host}`);
   const segments = urlObj.pathname.split('/').filter(Boolean);
+  const role = getRole(req);
 
   if (segments[0] !== 'api' || segments[1] !== 'lessons') {
     sendText(res, 404, 'Not Found');
@@ -141,6 +158,7 @@ async function handleApi(req, res) {
   }
 
   if (req.method === 'POST' && segments.length === 2) {
+    if (!ensureWriteAccess(res, role)) return;
     try {
       const body = await parseBody(req);
       const error = validateLesson(body);
@@ -158,7 +176,9 @@ async function handleApi(req, res) {
         subject: body.subject,
         teacher: body.teacher || '',
         room: body.room || '',
-        group: body.group || ''
+        group: body.group || '',
+        cancelled: false,
+        cancelComment: ''
       };
       data.lessons.push(lesson);
       writeData(data);
@@ -171,6 +191,7 @@ async function handleApi(req, res) {
 
   if (req.method === 'PUT' && segments.length === 3) {
     const id = segments[2];
+    if (!ensureWriteAccess(res, role)) return;
     try {
       const body = await parseBody(req);
       const error = validateLesson(body);
@@ -195,6 +216,37 @@ async function handleApi(req, res) {
         teacher: body.teacher || '',
         room: body.room || '',
         group: body.group || ''
+      };
+      writeData(data);
+      sendJson(res, 200, { lesson: data.lessons[index] });
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+    }
+    return;
+  }
+
+  if (req.method === 'PATCH' && segments.length === 4 && segments[3] === 'cancel') {
+    const id = segments[2];
+    if (!ensureWriteAccess(res, role)) return;
+    try {
+      const body = await parseBody(req);
+      const comment = String(body.cancelComment || '').trim();
+      if (!comment) {
+        sendJson(res, 400, { error: 'Missing cancelComment' });
+        return;
+      }
+
+      const data = readData();
+      const index = data.lessons.findIndex(item => item.id === id);
+      if (index === -1) {
+        sendJson(res, 404, { error: 'Lesson not found' });
+        return;
+      }
+
+      data.lessons[index] = {
+        ...data.lessons[index],
+        cancelled: true,
+        cancelComment: comment
       };
       writeData(data);
       sendJson(res, 200, { lesson: data.lessons[index] });
