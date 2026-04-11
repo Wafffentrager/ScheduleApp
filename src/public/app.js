@@ -81,9 +81,9 @@ function renderLessons(lessons) {
       cancelledTag.classList.add('cancelled');
       meta.appendChild(cancelledTag);
     }
-    if (lesson.teacher) meta.appendChild(makeTag(lesson.teacher));
-    if (lesson.room) meta.appendChild(makeTag(lesson.room));
-    if (lesson.group) meta.appendChild(makeTag(lesson.group));
+    if (lesson.teacher) meta.appendChild(makeTag("Преподаватель: " + lesson.teacher));
+    if (lesson.room) meta.appendChild(makeTag("Аудитория: " + lesson.room));
+    if (lesson.group) meta.appendChild(makeTag("Группа: " + lesson.group));
 
     const actions = document.createElement('div');
     actions.className = 'card-actions';
@@ -115,6 +115,16 @@ function renderLessons(lessons) {
       await cancelLesson(lesson.id, comment.trim());
     });
 
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'ghost danger';
+    deleteBtn.textContent = 'Удалить';
+    deleteBtn.addEventListener('click', async () => {
+      const confirmed = window.confirm(`Удалить пару "${lesson.subject}"?`);
+      if (!confirmed) return;
+      await deleteLesson(lesson.id);
+    });
+
+
     card.appendChild(header);
     card.appendChild(meta);
     if (cancelled && lesson.cancelComment) {
@@ -125,6 +135,7 @@ function renderLessons(lessons) {
     }
     actions.appendChild(editBtn);
     actions.appendChild(cancelBtn);
+    actions.appendChild(deleteBtn);
     card.appendChild(actions);
 
     lessonsEl.appendChild(card);
@@ -167,6 +178,33 @@ async function cancelLesson(id, cancelComment) {
       errorEl.textContent = data.error || 'Ошибка отмены';
       return;
     }
+    await loadLessons();
+  } catch (err) {
+    errorEl.textContent = 'Нет соединения с сервером';
+  }
+}
+
+async function deleteLesson(id) {
+  errorEl.textContent = '';
+  try {
+    let res = await fetch(`/api/lessons/${id}`, {
+      method: 'DELETE',
+      headers: { 'x-role': currentRole }
+    });
+
+    if (res.status === 405) {
+      res = await fetch(`/api/lessons/${id}/delete`, {
+        method: 'POST',
+        headers: { 'x-role': currentRole }
+      });
+    }
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      errorEl.textContent = data.error || 'Ошибка удаления';
+      return;
+    }
+    clearForm();
     await loadLessons();
   } catch (err) {
     errorEl.textContent = 'Нет соединения с сервером';

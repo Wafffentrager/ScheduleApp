@@ -225,6 +225,40 @@ async function handleApi(req, res) {
     return;
   }
 
+  if (req.method === 'DELETE' && segments.length === 3) {
+    const id = segments[2];
+    if (!ensureWriteAccess(res, role)) return;
+
+    const data = readData();
+    const index = data.lessons.findIndex(item => item.id === id);
+    if (index === -1) {
+      sendJson(res, 404, { error: 'Lesson not found' });
+      return;
+    }
+
+    const [lesson] = data.lessons.splice(index, 1);
+    writeData(data);
+    sendJson(res, 200, { lesson });
+    return;
+  }
+
+  if (req.method === 'POST' && segments.length === 4 && segments[3] === 'delete') {
+    const id = segments[2];
+    if (!ensureWriteAccess(res, role)) return;
+
+    const data = readData();
+    const index = data.lessons.findIndex(item => item.id === id);
+    if (index === -1) {
+      sendJson(res, 404, { error: 'Lesson not found' });
+      return;
+    }
+
+    const [lesson] = data.lessons.splice(index, 1);
+    writeData(data);
+    sendJson(res, 200, { lesson });
+    return;
+  }
+
   if (req.method === 'PATCH' && segments.length === 4 && segments[3] === 'cancel') {
     const id = segments[2];
     if (!ensureWriteAccess(res, role)) return;
